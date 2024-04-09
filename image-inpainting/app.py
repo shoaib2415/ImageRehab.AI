@@ -145,6 +145,17 @@ def allowed_file(filename):
 client = MongoClient('mongodb+srv://shoaibm2415:shoaibm2415@cluster0.x0hugws.mongodb.net/image-inpainting')
 db = client['mydatabase']
 
+def calculate_ssim(original_image, inpainted_image):
+    original_img = cv2.imread(original_image, cv2.IMREAD_GRAYSCALE)
+    inpainted_img = cv2.imread(inpainted_image, cv2.IMREAD_GRAYSCALE)
+    
+    # Resize images to have the same dimensions
+    original_img = cv2.resize(original_img, (inpainted_img.shape[1], inpainted_img.shape[0]))
+    
+    ssim_value = ssim(original_img, inpainted_img)
+    return ssim_value
+
+
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -202,20 +213,20 @@ def handle_post():
         'mse': float(mse_value)
     })
 
-def calculate_ssim(original_image, inpainted_image):
-    original_img = cv2.imread(original_image, cv2.IMREAD_GRAYSCALE)
-    inpainted_img = cv2.imread(inpainted_image, cv2.IMREAD_GRAYSCALE)
-    ssim_value = ssim(original_img, inpainted_img)
-    return ssim_value
-
 def calculate_psnr_mse(original_image, inpainted_image):
     original_img = cv2.imread(original_image)
     inpainted_img = cv2.imread(inpainted_image)
+
+    # Resize images to have the same dimensions
+    inpainted_img_resized = cv2.resize(inpainted_img, (original_img.shape[1], original_img.shape[0]))
+
     original_img = original_img.astype(np.float32)
-    inpainted_img = inpainted_img.astype(np.float32)
-    mse = np.mean(np.square(original_img - inpainted_img))
-    psnr = cv2.PSNR(original_img, inpainted_img)
-    return psnr, mse
+    inpainted_img_resized = inpainted_img_resized.astype(np.float32)
+
+    mse = np.mean(np.square(original_img - inpainted_img_resized))
+    psnr = cv2.PSNR(original_img, inpainted_img_resized)
+    return psnr, mse/10\
+
 
 if __name__ == "__main__":
     app.run(debug=True)
